@@ -1,18 +1,20 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
+	"net/http"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gorilla/mux"
 )
 
 type Quiz struct {
-	name     string
-	dialogue string
+	Name     string
+	Dialogue string
 }
 
-func postScrape() {
+func postScrape(w http.ResponseWriter, r *http.Request) {
 	doc, err := goquery.NewDocument("http://www.afi.com/100years/quotes.aspx")
 
 	if err != nil {
@@ -44,14 +46,17 @@ func postScrape() {
 
 	quizes := []Quiz{}
 	for index, element := range dialogues {
-		q := Quiz{name: (movieNames)[index], dialogue: element}
+		q := Quiz{Name: (movieNames)[index], Dialogue: element}
 		quizes = append(quizes, q)
 	}
-
-	fmt.Printf("%+v\n", quizes)
+	json.NewEncoder(w).Encode(quizes)
 
 }
 
 func main() {
-	postScrape()
+	router := mux.NewRouter()
+	router.HandleFunc("/movies", postScrape).Methods("GET")
+	log.Fatal(http.ListenAndServe(":8000", router))
+
+	// postScrape()
 }
